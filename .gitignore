@@ -5,3 +5,5 @@ dist/
 # never commit captured data or sessions
 data/
 exports/
+# local-only project notes — documents the pseudonymous identity; must stay off the remote
+CLAUDE.md
