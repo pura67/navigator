@@ -29,7 +29,7 @@
     "npmRebuild": true,
     "files": ["src/**/*", "assets/**/*", "package.json"],
     "mac": { "target": "dmg", "category": "public.app-category.utilities" },
-    "win": { "target": "nsis", "artifactName": "self-sync-Setup.${ext}" },
+    "win": { "target": "nsis", "artifactName": "Navigator-Setup.${ext}" },
     "linux": { "target": "AppImage" }
   }
 }
