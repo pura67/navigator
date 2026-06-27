@@ -1,89 +1,111 @@
-# Self Sync
+<div align="center">
 
-A thin, installable desktop app that logs into **your own** social accounts and
-pulls **your own** data — 100% locally. No backend, no servers, nothing leaves
-the machine. Built to mirror the chinup Electron approach.
+# 🧭 Navigator
 
-**Status:** Instagram works end-to-end. YouTube + TikTok are scaffolded stubs.
+### Reclaim your social data. Then do wonders with it.
 
-## How it works
+Your posts. Your reels. Your saved. The gems buried in your DMs.
+They're **yours** — Navigator pulls them onto **your** machine, where no
+algorithm gets a vote and no server holds them hostage.
 
-1. You click **Connect Instagram** → a real Instagram login window opens (its own
-   isolated Electron session). You log in like normal.
-2. On success, the session cookies are captured locally.
-3. A **hidden window stays parked on instagram.com** and runs the data fetches
-   *from inside that logged-in page* (`fetch('/api/v1/...')` via `executeJavaScript`).
-   Requests are same-origin with the real browser fingerprint — no header forgery,
-   no datacenter rate-limit walls.
-4. Results land in a local **SQLite** DB + media files on disk. Export to JSON anytime.
+![Local-first](https://img.shields.io/badge/local--first-100%25-46d18b)
+![Runs on](https://img.shields.io/badge/runs-Electron-6c8cff)
+![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)
+![Your data](https://img.shields.io/badge/your%20data-stays%20on%20your%20disk-46d18b)
+![Instagram](https://img.shields.io/badge/Instagram-live-E1306C)
 
-This same-origin-hidden-window trick is the whole reason it's reliable; it's lifted
-straight from `products/chinup/electron/src/main.js`.
+</div>
 
-## Instagram — what it pulls (your account only)
+---
 
-| Scope | Endpoint | Notes |
-|-------|----------|-------|
-| Posts + Reels + profile | `/api/v1/users/{uid}/info/`, `/api/v1/feed/user/{uid}/` | captions, counts, thumbnails (videos optional) |
-| Insights / analytics | `/api/v1/media/{id}/insights/` | best-effort; needs a Pro/Creator account |
-| Saved posts | `/api/v1/feed/saved/posts/` | |
-| Followers / following | `/api/v1/friendships/{uid}/{followers,following}/` | paginated; most rate-limit-sensitive |
+## The opinion
 
-## Run
+You don't own your social data — you *rent* it. It pours in for years and trickles
+out, if ever, as a sad ZIP of JSON that arrives three days late and missing the good
+parts. The reels you saved at 2am? The clip a friend sent that you can never find
+again? Locked behind an app designed to keep you scrolling, not to give you your
+stuff back.
+
+**Navigator flips it.** Your account, your browser, your disk. It signs into *your
+own* account, pulls *your own* content, and lays it out as real files and a real
+database on your machine — to keep, to search, to back up, to build on. No cloud, no
+middleman, no "we value your privacy" while they sell it.
+
+Reclaim it. Then do wonders with it.
+
+## What you get
+
+| | |
+|---|---|
+| 📸 **Posts & Reels** | Your full grid + reels — captions, likes, comments, views, timestamps, thumbnails, and the videos themselves. |
+| 🔖 **Saved** | Every reel and post you ever saved — actually browsable, actually downloadable, offline. |
+| 👥 **Followers & Following** | Full lists, grouped and searchable. |
+| 📊 **Insights** | Per-post metrics where available (Pro/Creator accounts). |
+| 💬 **DM shared media** | The reels, posts, stories and clips people sent you in DMs — pulled per-thread, with an *All / None* picker. The chat text is never touched. |
+| 🧑‍🎨 **Creator explorer** | Everything you've collected, **grouped by the creator** who made it. See who you actually keep coming back to. |
+| ⬇️ **Real downloads** | Thumbnails always, videos on demand — clear counts of what's actually on disk, and one-click local playback. |
+| 🗃️ **Yours forever** | Local SQLite + a media folder + one-click **JSON export**. Take it anywhere. |
+
+## 100% local, by design
+
+- **Nothing leaves your machine.** No backend, no servers, no telemetry.
+- **Your credentials never travel.** You log in through a normal browser window;
+  Navigator only ever talks to the platform *as you*, from your own device.
+- **Your data is just files.** A SQLite database and a media folder you control —
+  not a black box.
+
+## How it works (the clever bit)
+
+Navigator opens a real, logged-in browser window and makes the *same calls the
+website itself makes*, from inside that page. Same origin, same session, real
+fingerprint — so it behaves like you using your own browser, not like a scraper
+hammering an API from a datacenter. It paces itself with randomized delays, backs
+off politely, and remembers exactly where it left off so re-runs only fetch what's
+new.
+
+## Quickstart
 
 ```bash
-cd personal/self-sync
-npm install            # postinstall runs electron-rebuild for better-sqlite3
+git clone https://github.com/pura67/navigator.git
+cd navigator
+npm install        # builds the local database engine
 npm start
 ```
 
-If `better-sqlite3` complains about ABI/native build: `npm run rebuild`.
+Then: **Connect** your account → pick what to pull → **Import**. That's it.
 
-## Package (installable)
-
+**Build a shareable app:**
 ```bash
-npm run dist:mac      # → dist/*.dmg     (also dist:win / dist:linux)
+npm run dist:mac   # → dist/Navigator-<version>-arm64.dmg
 ```
 
-## Where data lives
+## Do wonders with it
 
-Everything is under Electron's `userData` dir:
-- macOS: `~/Library/Application Support/Self Sync/data/`
-  - `self-sync.db` — SQLite (WAL)
-  - `media/instagram/{thumbs,saved,videos}/` — downloaded files
-- **Open data folder** button reveals it. **Export JSON** writes a full dump.
+Once it's *yours*, it's raw material:
 
-## Architecture (layered; extend to YT/TT here)
+- 🧠 **Feed it to an AI** — your captions, your saved reels, your DM finds → build a
+  personal recommender that actually knows your taste.
+- 📚 **A real archive** — a backup you own, that doesn't vanish if an account does.
+- 🔍 **Re-find the unfindable** — that clip a friend sent six months ago, one search away.
+- 📈 **Honest analytics** — read your own numbers without the app's dark patterns.
+- 🎨 **Remix your taste** — group by creator, study what you collect, make something new.
 
-```
-src/
-  main.js                  entry: boot DB, register IPC, open window, lifecycle
-  windows.js               main window + emit() to renderer
-  paths.js                 userData/data/media path helpers
-  ctx.js                   buildCtx() — binds net/disk/DB to ONE account's session
-  preload.mjs              contextBridge → window.api (thin)
-  ipc/                     IPC handlers by domain (accounts, sync, data, settings, shell) + index
-  db/                      SQLite split by domain + barrel index (shared live `db` binding)
-    connection.js (schema+migrations)  accounts  content  cursors  settings  runs  queries
-  sync/session-fetch.js    hidden-window same-origin fetch (generic, all platforms)
-  platforms/
-    base.js                adapter contract (defineAdapter)
-    index.js               registry
-    instagram.js           ← the only fully-implemented adapter
-    youtube.js  tiktok.js  stubs — implement sync()/resolveAccount(), flip enabled:true
-  ui/                      renderer, ES modules: index.html, styles.css, dom.js, views.js, app.js
-```
+Your data, finally yours to point at whatever you want.
 
-To add a platform: write an adapter (login URL, success check, headers,
-`resolveAccount`, `sync`) and register it in `platforms/index.js`. The shell handles
-login windows, per-account sessions, cookie capture, pacing/backoff, resume markers,
-storage, media download, export, and all UI wiring.
+## Roadmap
 
-**Multi-account:** each account gets its own `persist:<platform>:<n>` session partition
-(stored on the `accounts` row); the UI switcher scopes every read/sync by active account.
+- ✅ **Instagram** — live
+- 🔜 **YouTube** & **TikTok** — adapters scaffolded; same engine, same local-first promise
 
-## Use responsibly
+## Use it like you mean it
 
-Pull only accounts you own and are logged into. This calls private web endpoints,
-which is against most platforms' ToS for third-party automation; use on your own
-data, at gentle rates (delays are built in).
+Navigator is for **your own account** — the data you already have every right to.
+It speaks the platform's private web API (the one the site uses), so keep it gentle
+and personal. Don't point it at other people; don't turn it into a scraper farm.
+Reclaiming your data is the point. Abusing someone else's isn't.
+
+<div align="center">
+
+—  made by **pura** · *reclaim what's yours*  —
+
+</div>
