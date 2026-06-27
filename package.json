@@ -1,6 +1,6 @@
 {
   "name": "self-sync",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Self-account syncer — log into your own social accounts and pull your data, 100% locally.",
   "type": "module",
   "main": "src/main.js",

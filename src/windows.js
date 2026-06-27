@@ -10,7 +10,7 @@ export function createMainWindow() {
   mainWin = new BrowserWindow({
     width: 1040,
     height: 760,
-    title: 'Self Sync',
+    title: 'Navigator',
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
