@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.cdninstagram.com https://*.fbcdn.net;" />
+  <title>Self Sync</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <aside id="rail">
+    <div class="brand">Self&nbsp;Sync</div>
+    <nav id="platforms"></nav>
+    <div class="rail-foot">100% local · your data never leaves this machine</div>
+  </aside>
+
+  <main id="panel">
+    <header id="head">
+      <h1 id="title">—</h1>
+      <span id="status" class="pill">…</span>
+    </header>
+
+    <section id="connect" class="card hidden">
+      <p id="connect-copy"></p>
+      <button id="btn-login" class="primary">Connect</button>
+    </section>
+
+    <section id="workspace" class="hidden">
+      <div class="card account">
+        <img id="acc-dp" class="dp hidden" alt="" />
+        <div class="acc-id">
+          <select id="acc-select" title="Switch account"></select>
+          <button id="btn-add" title="Add another account">+ Add account</button>
+          <div class="acc-sub" id="acc-sub"></div>
+          <div class="acc-bio" id="acc-bio"></div>
+        </div>
+        <div class="acc-actions">
+          <button id="btn-export">Export JSON</button>
+          <button id="btn-folder">Open data folder</button>
+          <button id="btn-disconnect" class="danger">Disconnect</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>What to pull</h2>
+        <div id="scopes" class="scopes"></div>
+        <label class="opt"><input type="checkbox" id="opt-videos" /> <span>Download videos for offline playback <span class="hint">(larger; off = play on Instagram)</span></span></label>
+        <label class="opt">Pace
+          <select id="opt-pacing">
+            <option value="balanced">Balanced — safe, reasonable speed</option>
+            <option value="slow">Slow — safest, big pauses</option>
+          </select>
+          <span class="hint">randomized delays + backoff to avoid blocks</span>
+        </label>
+        <label class="opt">Date range
+          <select id="opt-cutoff">
+            <option value="all">All time</option>
+            <option value="30d">Last 30 days</option>
+            <option value="12mo">Last 12 months</option>
+            <option value="today">Today</option>
+            <option value="custom">Custom date…</option>
+          </select>
+          <input type="date" id="opt-cutoff-date" class="hidden" />
+          <span class="hint">posts &amp; reels only</span>
+        </label>
+        <button id="btn-sync" class="primary">Import data</button>
+      </div>
+
+      <div class="card hidden" id="dm-card">
+        <h2>Direct messages — shared media</h2>
+        <p class="hint dm-note">Pull reels, posts, stories &amp; photos shared in the chats you pick. The conversation text itself is never read.</p>
+        <div class="dm-bar">
+          <button id="btn-dm-load">Load DM threads</button>
+          <span id="dm-pick" class="hidden"><a id="dm-all" class="link">All</a> · <a id="dm-none" class="link">None</a> · <span id="dm-count" class="hint"></span></span>
+          <button id="btn-dm-sync" class="primary hidden">Sync shared media</button>
+        </div>
+        <div id="dm-threads" class="dm-threads"></div>
+      </div>
+
+      <div class="card">
+        <h2>Your data</h2>
+        <div id="overall" class="overall"></div>
+        <div id="stats" class="stats"></div>
+      </div>
+
+      <div class="card">
+        <h2>Downloads</h2>
+        <div id="downloads" class="downloads"></div>
+      </div>
+
+      <div class="card">
+        <h2>Browse</h2>
+        <div id="tabs" class="tabs"></div>
+        <div id="list" class="list"></div>
+      </div>
+
+      <div class="card">
+        <h2>Activity</h2>
+        <pre id="log" class="log"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

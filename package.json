@@ -1,0 +1,35 @@
+{
+  "name": "self-sync",
+  "version": "0.1.0",
+  "description": "Self-account syncer — log into your own social accounts and pull your data, 100% locally.",
+  "type": "module",
+  "main": "src/main.js",
+  "author": "etacuder",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "postinstall": "electron-rebuild -f -w better-sqlite3 || true",
+    "build": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.10.0"
+  },
+  "devDependencies": {
+    "electron": "^34.0.0",
+    "electron-builder": "^25.0.0",
+    "electron-rebuild": "^3.2.9"
+  },
+  "build": {
+    "appId": "com.pura.navigator",
+    "productName": "Navigator",
+    "npmRebuild": true,
+    "files": ["src/**/*", "assets/**/*", "package.json"],
+    "mac": { "target": "dmg", "category": "public.app-category.utilities" },
+    "win": { "target": "nsis", "artifactName": "self-sync-Setup.${ext}" },
+    "linux": { "target": "AppImage" }
+  }
+}
