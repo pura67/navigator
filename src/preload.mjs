@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld('api', {
   saveDestination: (payload) => ipcRenderer.invoke('destinations:save', payload),
   deleteDestination: (id) => ipcRenderer.invoke('destinations:delete', { id }),
   testDestination: (payload) => ipcRenderer.invoke('destinations:test', payload),
+  connectDrive: (clientId, clientSecret) => ipcRenderer.invoke('drive:connect', { clientId, clientSecret }),
   pushTo: (platform, accountId, destinationId, opts = {}) => ipcRenderer.invoke('push:run', { platform, accountId, destinationId, ...opts }),
 
   onProgress: (cb) => ipcRenderer.on('sync:progress', (_e, p) => cb(p)),

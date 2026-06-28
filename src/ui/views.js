@@ -177,6 +177,17 @@ function fieldHtml(f, val) {
   }
   if (f.type === 'textarea')
     return `<label class="df">${esc(f.label)}<textarea id="${id}" data-key="${esc(f.key)}" rows="2" placeholder="${esc(f.placeholder || '')}">${esc(val || '')}</textarea></label>`;
+  if (f.type === 'select') {
+    const cur = val === undefined ? f.default : val;
+    const opts = (f.options || []).map((o) => `<option value="${esc(o.value)}"${o.value === cur ? ' selected' : ''}>${esc(o.label)}</option>`).join('');
+    return `<label class="df">${esc(f.label)}<select id="${id}" data-key="${esc(f.key)}">${opts}</select></label>`;
+  }
+  if (f.type === 'connect') {
+    const on = !!val;
+    return `<div class="df df-connect"><input type="hidden" id="${id}" data-key="${esc(f.key)}" value="${esc(val || '')}" />
+      <button type="button" id="df-connect">${on ? 'Reconnect Google Drive' : 'Connect Google Drive'}</button>
+      <span id="df-connect-status" class="hint">${on ? '✓ connected' : 'not connected'}</span></div>`;
+  }
   const t = f.type === 'password' ? 'password' : 'text';
   return `<label class="df">${esc(f.label)}${f.required ? ' *' : ''}<input type="${t}" id="${id}" data-key="${esc(f.key)}" value="${esc(val ?? '')}" placeholder="${esc(f.placeholder || '')}" /></label>`;
 }

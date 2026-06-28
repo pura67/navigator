@@ -207,15 +207,27 @@ function wireDestForm() {
     openDestForm({ id: $('dest-id').value ? Number($('dest-id').value) : undefined, type: $('df-type').value, name: $('df-name').value, config: {} });
   };
   $('df-cancel').onclick = () => $('dest-form').classList.add('hidden');
+  const connectBtn = document.getElementById('df-connect');
+  if (connectBtn) connectBtn.onclick = async () => {
+    const clientId = document.getElementById('df-f-clientId')?.value.trim();
+    const clientSecret = document.getElementById('df-f-clientSecret')?.value.trim();
+    const status = document.getElementById('df-connect-status');
+    if (!clientId || !clientSecret) { status.textContent = 'enter client ID + secret first'; return; }
+    status.textContent = 'opening Google sign-in…';
+    const r = await window.api.connectDrive(clientId, clientSecret);
+    if (r.ok) { document.getElementById('df-f-refreshToken').value = r.refreshToken; status.textContent = '✓ connected'; }
+    else status.textContent = '✗ ' + r.error;
+  };
   $('df-test').onclick = async () => {
     const d = collectDest();
     $('df-msg').textContent = 'Testing…';
     const r = await window.api.testDestination({ type: d.type, config: d.config });
-    $('df-msg').textContent = r.ok ? `✓ reachable ${r.detail || ''}` : `✗ ${r.error}`;
+    $('df-msg').textContent = r.ok ? `✓ ${r.type ? r.type + ' · ' : ''}reachable ${r.detail || ''}` : `✗ ${r.error}`;
   };
   $('df-save').onclick = async () => {
     const d = collectDest();
-    await window.api.saveDestination(d);
+    const r = await window.api.saveDestination(d);
+    if (r && r.ok === false) { $('df-msg').textContent = '✗ ' + r.error; return; }
     $('dest-form').classList.add('hidden');
     loadDestinations();
   };

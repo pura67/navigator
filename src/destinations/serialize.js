@@ -58,6 +58,9 @@ const KINDS = {
 };
 
 export const ALL_KINDS = Object.keys(KINDS);
+// Kinds that can carry a downloaded video. In "videos only" mode we ship just
+// these (rows that actually have a video file) plus `profile` for context.
+const VIDEO_KINDS = new Set(['media', 'saved', 'dm']);
 
 export function source(acc) {
   return {
@@ -75,6 +78,21 @@ export function records(accountId, kind, shipped = new Set()) {
     const ref = spec.ref(row);
     if (shipped.has(ref)) continue;
     out.push({ ref, data: clean(row) });
+  }
+  return out;
+}
+
+// "Videos only" mode: every downloaded video across the video-bearing kinds,
+// paired with its full metadata row. Returns [{ kind, relVideo, data }].
+export function videoItems(accountId) {
+  const out = [];
+  const seen = new Set();
+  for (const kind of VIDEO_KINDS) {
+    for (const row of KINDS[kind].rows(accountId)) {
+      if (!row.local_video || seen.has(row.local_video)) continue;
+      seen.add(row.local_video);
+      out.push({ kind, relVideo: row.local_video, data: clean(row) });
+    }
   }
   return out;
 }

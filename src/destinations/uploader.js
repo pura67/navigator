@@ -7,7 +7,7 @@ import path from 'node:path';
 import * as DB from '../db/index.js';
 import { userDataDir } from '../paths.js';
 import { makeDestination } from './index.js';
-import { SCHEMA, ALL_KINDS, source, records, blobs } from './serialize.js';
+import { SCHEMA, ALL_KINDS, source, records, blobs, videoItems } from './serialize.js';
 
 const BATCH = 200;
 const nowS = () => Math.floor(Date.now() / 1000);
@@ -40,6 +40,32 @@ export async function pushAccount(acc, dest, { kinds, full = false, onProgress }
   const stats = {};
   const exported_at = nowS();
   const env = (kind, batch, recs) => ({ schema: SCHEMA, source: src, exported_at, kind, batch, count: recs.length, records: recs.map((r) => r.data) });
+
+  // "Videos only": ship each video file with a self-describing JSON sidecar
+  // (<file>.json) carrying that item's metadata, co-located for easy ingestion.
+  if (dest.config?.content === 'videos') {
+    let vids = 0, metas = 0, missing = 0;
+    const items = videoItems(acc.id);
+    for (const it of items) {
+      const abs = path.join(userDataDir(), it.relVideo);
+      if (!fs.existsSync(abs)) { missing++; continue; }
+      const videoRef = `blob:${it.relVideo}`, metaRef = `meta:${it.relVideo}`;
+      if (!shipped.has(videoRef)) {
+        const buffer = fs.readFileSync(abs);
+        await retry(() => sink.putBlob(src, { relPath: it.relVideo, buffer, contentType: mimeOf(it.relVideo) }), `video ${it.relVideo}`, onProgress);
+        DB.recordShipped(dest.id, acc.id, [videoRef]); vids++;
+      }
+      if (!shipped.has(metaRef)) {
+        const meta = Buffer.from(JSON.stringify({ schema: SCHEMA, source: src, exported_at, kind: it.kind, record: it.data }, null, 2));
+        await retry(() => sink.putBlob(src, { relPath: `${it.relVideo}.json`, buffer: meta, contentType: 'application/json' }), `meta ${it.relVideo}`, onProgress);
+        DB.recordShipped(dest.id, acc.id, [metaRef]); metas++;
+      }
+      if ((vids + metas) % 10 === 0 || it === items[items.length - 1]) onProgress?.({ type: 'progress', message: `videos: ${vids} sent (+${metas} metadata)` });
+    }
+    stats.videos = vids; stats.metadata = metas;
+    if (missing) stats.not_downloaded = missing;
+    return stats;
+  }
 
   // 1) records, kind by kind, in batches
   for (const kind of pick) {

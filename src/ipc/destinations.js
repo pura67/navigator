@@ -3,21 +3,41 @@ import { ipcMain } from 'electron';
 
 import * as DB from '../db/index.js';
 import { TYPES, makeDestination } from '../destinations/index.js';
+import { detectDestination } from '../destinations/autodetect.js';
+import { connectDrive } from '../destinations/google-oauth.js';
 import { pushAccount } from '../destinations/uploader.js';
 import { emit } from '../windows.js';
+
+// "auto" isn't a real backend — resolve the pasted link into a concrete one
+// (azure/s3/webhook) so what we store and run is always explicit.
+function resolve(payload) {
+  if (payload.type !== 'auto') return payload;
+  const { connection, ...extra } = payload.config || {};
+  const det = detectDestination(connection, extra);
+  return { id: payload.id, name: payload.name, enabled: payload.enabled, type: det.type, config: det.config };
+}
 
 export function registerDestinationIpc() {
   ipcMain.handle('destinations:types', () => TYPES);
   ipcMain.handle('destinations:list', () => DB.listDestinations());
-  ipcMain.handle('destinations:save', (_e, payload) => { DB.saveDestination(payload); return DB.listDestinations(); });
+  ipcMain.handle('destinations:save', (_e, payload) => {
+    try { DB.saveDestination(resolve(payload)); return { ok: true }; }
+    catch (err) { return { ok: false, error: String(err.message || err) }; }
+  });
   ipcMain.handle('destinations:delete', (_e, { id }) => { DB.deleteDestination(id); return DB.listDestinations(); });
+
+  // Interactive Google sign-in → returns a refresh token the form stores in config.
+  ipcMain.handle('drive:connect', async (_e, { clientId, clientSecret } = {}) => {
+    try { return { ok: true, ...(await connectDrive(clientId, clientSecret)) }; }
+    catch (err) { return { ok: false, error: String(err.message || err) }; }
+  });
 
   ipcMain.handle('destinations:test', async (_e, { id, type, config } = {}) => {
     try {
-      const dest = id ? DB.getDestination(id) : { type, config };
+      const dest = id ? DB.getDestination(id) : resolve({ type, config });
       const sink = makeDestination(dest);
       const r = await sink.test();
-      return { ok: true, ...r };
+      return { ok: true, type: dest.type, ...r };
     } catch (err) { return { ok: false, error: String(err.message || err) }; }
   });
 
