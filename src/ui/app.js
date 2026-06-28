@@ -186,6 +186,74 @@ $('btn-dm-sync').onclick = async () => {
   }
 };
 
+// ── destinations (remote sinks) ──
+async function loadDestinations() {
+  if (!state.destTypes) state.destTypes = await window.api.destinationTypes();
+  state.dests = await window.api.destinations();
+  V.renderDestinations(state.dests);
+}
+
+function collectDest() {
+  const type = $('df-type').value;
+  const config = {};
+  document.querySelectorAll('#df-fields [data-key]').forEach((el) => {
+    config[el.dataset.key] = el.type === 'checkbox' ? el.checked : el.value.trim();
+  });
+  return { id: $('dest-id').value ? Number($('dest-id').value) : undefined, name: ($('df-name').value.trim() || type), type, config, enabled: true };
+}
+
+function wireDestForm() {
+  $('df-type').onchange = () => {
+    openDestForm({ id: $('dest-id').value ? Number($('dest-id').value) : undefined, type: $('df-type').value, name: $('df-name').value, config: {} });
+  };
+  $('df-cancel').onclick = () => $('dest-form').classList.add('hidden');
+  $('df-test').onclick = async () => {
+    const d = collectDest();
+    $('df-msg').textContent = 'Testing…';
+    const r = await window.api.testDestination({ type: d.type, config: d.config });
+    $('df-msg').textContent = r.ok ? `✓ reachable ${r.detail || ''}` : `✗ ${r.error}`;
+  };
+  $('df-save').onclick = async () => {
+    const d = collectDest();
+    await window.api.saveDestination(d);
+    $('dest-form').classList.add('hidden');
+    loadDestinations();
+  };
+}
+
+function openDestForm(existing) {
+  V.renderDestForm(state.destTypes, existing);
+  $('dest-form').classList.remove('hidden');
+  wireDestForm();
+}
+
+$('btn-dest-add').onclick = () => openDestForm(null);
+$('dests').onclick = async (e) => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const id = Number(b.dataset.id);
+  const d = state.dests.find((x) => x.id === id);
+  const act = b.dataset.act;
+  if (act === 'edit') return openDestForm(d);
+  if (act === 'del') { if (confirm(`Remove “${d.name}”?`)) { await window.api.deleteDestination(id); loadDestinations(); } return; }
+  if (act === 'test') {
+    logLine({ type: '', message: `Testing “${d.name}”…` });
+    const r = await window.api.testDestination({ id });
+    logLine(r.ok ? { type: 'finished', message: `“${d.name}” reachable ${r.detail || ''}` } : { type: 'error', message: `“${d.name}”: ${r.error}` });
+    return;
+  }
+  if (act === 'push') {
+    if (!state.activeAccountId) return alert('Connect an account first.');
+    b.disabled = true;
+    $('log').innerHTML = '';
+    const r = await window.api.pushTo(state.current, state.activeAccountId, id, { full: $('dest-full').checked });
+    b.disabled = false;
+    if (r.status === 'error') logLine({ type: 'error', message: `Push failed: ${r.error}` });
+    loadDestinations();
+  }
+};
+window.api.onPushProgress((p) => logLine(p));
+
 window.api.onProgress((p) => { if (p.platform === state.current) logLine(p); });
 window.api.onConnected((p) => {
   if (p.platform !== state.current) return;
@@ -204,4 +272,5 @@ window.api.onConnected((p) => {
   const first = state.platforms.find((p) => p.enabled) || state.platforms[0];
   V.renderRail(state.platforms, first?.id, selectPlatform);
   if (first) selectPlatform(first.id);
+  loadDestinations();
 })();

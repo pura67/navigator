@@ -65,6 +65,22 @@ const SCHEMA = `
     caption TEXT, thumbnail_url TEXT, video_url TEXT, permalink TEXT,
     local_thumb TEXT, local_video TEXT, shared_at INTEGER, raw_json TEXT
   );
+  -- User-configured remote targets a copy of the data can be pushed to.
+  -- type ∈ {webhook, s3, folder}; config_json holds the type-specific fields
+  -- (endpoint/url, headers, bucket/keys, path, options). Secrets live here, on
+  -- this machine only — same trust level as the session cookies.
+  CREATE TABLE IF NOT EXISTS destinations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL, type TEXT NOT NULL, config_json TEXT,
+    enabled INTEGER DEFAULT 1, created_at INTEGER, last_push_at INTEGER, last_status TEXT
+  );
+  -- Idempotency ledger: which refs (records + media files) already shipped to a
+  -- destination, so re-runs only send what's new. ref = "kind:id" or "blob:path".
+  CREATE TABLE IF NOT EXISTS export_log (
+    destination_id INTEGER NOT NULL REFERENCES destinations(id) ON DELETE CASCADE,
+    account_id INTEGER NOT NULL, ref TEXT NOT NULL, pushed_at INTEGER,
+    PRIMARY KEY (destination_id, account_id, ref)
+  );
 `;
 
 function migrate(d) {

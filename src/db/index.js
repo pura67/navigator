@@ -7,3 +7,4 @@ export * from './settings.js';
 export * from './runs.js';
 export * from './dm.js';
 export * from './queries.js';
+export * from './destinations.js';

@@ -111,3 +111,22 @@ button.danger { color: var(--danger); }
 .log .warn { color: #ffcf66; }
 .log .err { color: var(--danger); }
 .log .ok { color: var(--ok); }
+
+/* Destinations (remote sinks) */
+p.hint { color: var(--dim); font-size: 12px; margin: -4px 0 14px; }
+.opt.inline { display: inline-flex; margin: 0; }
+.dests { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.dest { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: #161922; }
+.dest-1 { font-size: 14px; font-weight: 600; }
+.dest-2 { margin-top: 2px; }
+.dest-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.dest-actions button { font-size: 12px; padding: 6px 10px; }
+.dest-bar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.dest-form { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.df { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--dim); }
+.df input, .df select, .df textarea { font: inherit; background: #232734; color: var(--txt); border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; }
+.df textarea { resize: vertical; font-family: ui-monospace, Menlo, monospace; }
+.df.df-check { flex-direction: row; align-items: center; gap: 9px; }
+.df.df-check input { accent-color: var(--accent); }
+.df.df-check span { color: var(--txt); }
+.dest-form-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

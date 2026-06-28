@@ -7,9 +7,12 @@ import { registerIpc } from './ipc/index.js';
 import { createMainWindow } from './windows.js';
 import { closeApiWindows } from './sync/session-fetch.js';
 import { userDataDir } from './paths.js';
+import { importDestinationsFromEnv } from './destinations/env.js';
 
 app.whenReady().then(() => {
   initDb(userDataDir());
+  const imported = importDestinationsFromEnv();
+  if (imported.length) console.log('[destinations] imported from env:', imported.join(', '));
   registerIpc();
   createMainWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createMainWindow(); });

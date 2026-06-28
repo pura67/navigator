@@ -5,6 +5,7 @@ import { registerDataIpc } from './data.js';
 import { registerSettingsIpc } from './settings.js';
 import { registerShellIpc } from './shell.js';
 import { registerDmIpc } from './dm.js';
+import { registerDestinationIpc } from './destinations.js';
 
 export function registerIpc() {
   registerAccountIpc();
@@ -13,4 +14,5 @@ export function registerIpc() {
   registerSettingsIpc();
   registerShellIpc();
   registerDmIpc();
+  registerDestinationIpc();
 }

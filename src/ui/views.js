@@ -150,6 +150,54 @@ export function renderList(key, rows) {
   el.innerHTML = html + (rows.length >= 300 ? '<div class="empty">Showing first 300.</div>' : '');
 }
 
+// ── destinations (remote sinks) ──
+export function renderDestinations(list) {
+  const el = $('dests');
+  if (!list || !list.length) { el.innerHTML = '<div class="empty">No destinations yet — add one below.</div>'; return; }
+  el.innerHTML = list.map((d) => `
+    <div class="dest" data-id="${d.id}">
+      <div class="dest-main">
+        <div class="dest-1">${esc(d.name)} <span class="muted">· ${esc(d.type)}</span>${d.enabled ? '' : ' <span class="muted">(off)</span>'}</div>
+        <div class="dest-2 hint">${d.last_status ? `last push: ${esc(d.last_status)}${d.last_push_at ? ' · ' + fmtDate(d.last_push_at) : ''}` : 'never pushed'}</div>
+      </div>
+      <div class="dest-actions">
+        <button data-act="push" data-id="${d.id}" class="primary">Push now</button>
+        <button data-act="test" data-id="${d.id}">Test</button>
+        <button data-act="edit" data-id="${d.id}">Edit</button>
+        <button data-act="del" data-id="${d.id}" class="danger">Remove</button>
+      </div>
+    </div>`).join('');
+}
+
+function fieldHtml(f, val) {
+  const id = `df-f-${f.key}`;
+  if (f.type === 'checkbox') {
+    const on = (val === undefined ? f.default : val) ? ' checked' : '';
+    return `<label class="df df-check"><input type="checkbox" id="${id}" data-key="${esc(f.key)}"${on} /> <span>${esc(f.label)}</span></label>`;
+  }
+  if (f.type === 'textarea')
+    return `<label class="df">${esc(f.label)}<textarea id="${id}" data-key="${esc(f.key)}" rows="2" placeholder="${esc(f.placeholder || '')}">${esc(val || '')}</textarea></label>`;
+  const t = f.type === 'password' ? 'password' : 'text';
+  return `<label class="df">${esc(f.label)}${f.required ? ' *' : ''}<input type="${t}" id="${id}" data-key="${esc(f.key)}" value="${esc(val ?? '')}" placeholder="${esc(f.placeholder || '')}" /></label>`;
+}
+
+export function renderDestForm(types, existing) {
+  const cur = existing || { type: types[0].id, config: {}, name: '' };
+  const spec = types.find((t) => t.id === cur.type) || types[0];
+  $('dest-form').innerHTML = `
+    <input type="hidden" id="dest-id" value="${existing?.id || ''}" />
+    <label class="df">Name <input id="df-name" value="${esc(cur.name || '')}" placeholder="My destination" /></label>
+    <label class="df">Type <select id="df-type">${types.map((t) => `<option value="${t.id}"${t.id === cur.type ? ' selected' : ''}>${esc(t.label)}</option>`).join('')}</select></label>
+    <p class="hint">${esc(spec.blurb)}</p>
+    <div id="df-fields">${spec.fields.map((f) => fieldHtml(f, cur.config[f.key])).join('')}</div>
+    <div class="dest-form-bar">
+      <button id="df-save" class="primary">Save</button>
+      <button id="df-test">Test connection</button>
+      <button id="df-cancel">Cancel</button>
+      <span id="df-msg" class="hint"></span>
+    </div>`;
+}
+
 export function renderDmThreads(threads) {
   const wrap = $('dm-threads');
   if (!threads || !threads.length) { wrap.innerHTML = '<div class="empty">No threads found.</div>'; return; }

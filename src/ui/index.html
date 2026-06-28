@@ -89,6 +89,17 @@
       </div>
 
       <div class="card">
+        <h2>Send a copy</h2>
+        <p class="hint">Push your synced data to a destination you control — an HTTP endpoint, S3-compatible storage, or a folder. Re-pushing only sends what's new.</p>
+        <div id="dests" class="dests"></div>
+        <div class="dest-bar">
+          <button id="btn-dest-add">+ Add destination</button>
+          <label class="opt inline"><input type="checkbox" id="dest-full" /> <span class="hint">Full re-push (ignore history, re-send everything)</span></label>
+        </div>
+        <div id="dest-form" class="dest-form hidden"></div>
+      </div>
+
+      <div class="card">
         <h2>Browse</h2>
         <div id="tabs" class="tabs"></div>
         <div id="list" class="list"></div>

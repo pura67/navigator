@@ -25,6 +25,14 @@ contextBridge.exposeInMainWorld('api', {
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSetting: (key, value) => ipcRenderer.invoke('settings:set', { key, value }),
 
+  destinationTypes: () => ipcRenderer.invoke('destinations:types'),
+  destinations: () => ipcRenderer.invoke('destinations:list'),
+  saveDestination: (payload) => ipcRenderer.invoke('destinations:save', payload),
+  deleteDestination: (id) => ipcRenderer.invoke('destinations:delete', { id }),
+  testDestination: (payload) => ipcRenderer.invoke('destinations:test', payload),
+  pushTo: (platform, accountId, destinationId, opts = {}) => ipcRenderer.invoke('push:run', { platform, accountId, destinationId, ...opts }),
+
   onProgress: (cb) => ipcRenderer.on('sync:progress', (_e, p) => cb(p)),
+  onPushProgress: (cb) => ipcRenderer.on('push:progress', (_e, p) => cb(p)),
   onConnected: (cb) => ipcRenderer.on('account:connected', (_e, p) => cb(p)),
 });
