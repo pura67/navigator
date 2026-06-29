@@ -2,6 +2,9 @@
 // Everything else lives in db/, ipc/, ctx.js, windows.js, platforms/, sync/.
 import { app, BrowserWindow } from 'electron';
 
+// Drop the Blink "AutomationControlled" marker (one more automation tell IG reads).
+app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
+
 import { initDb } from './db/index.js';
 import { registerIpc } from './ipc/index.js';
 import { createMainWindow } from './windows.js';

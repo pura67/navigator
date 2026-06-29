@@ -228,7 +228,13 @@ export default defineAdapter({
   homeUrl: `${BASE}/`,
 
   loginSuccess(url, cookies) {
-    return !!cookies.sessionid && !!cookies.ds_user_id && !/accounts\/login/.test(url);
+    // Logged in only once cookies are set AND we're off any auth/challenge page.
+    // IG sets sessionid on the checkpoint page itself, so without excluding
+    // challenge/checkpoint/2FA we'd "succeed" mid-challenge → resolveAccount hits
+    // the checkpoint and the whole add-account fails. Waiting lets the user clear
+    // IG's security check (expected when adding a 2nd account) before we proceed.
+    if (!cookies.sessionid || !cookies.ds_user_id) return false;
+    return !/accounts\/login|\/challenge|\/checkpoint|two_factor|two_step/.test(url);
   },
 
   buildHeaders(cookies) {

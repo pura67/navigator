@@ -9,7 +9,7 @@
 // headers by the adapter's buildHeaders().
 
 import { BrowserWindow } from 'electron';
-import { tunedSession, tuneWindow } from '../session-config.js';
+import { tunedSession, tuneWindow, STEALTH_PRELOAD } from '../session-config.js';
 
 const apiWindows = new Map(); // partition -> BrowserWindow
 
@@ -22,7 +22,7 @@ async function getApiWindow(partition, adapter) {
     show: false,
     width: 1024,
     height: 768,
-    webPreferences: { session: sess, contextIsolation: false, sandbox: false },
+    webPreferences: { session: sess, contextIsolation: false, sandbox: false, preload: STEALTH_PRELOAD },
   });
   tuneWindow(win);
   win.on('closed', () => apiWindows.delete(partition));

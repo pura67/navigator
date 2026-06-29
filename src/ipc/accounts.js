@@ -5,7 +5,7 @@ import * as DB from '../db/index.js';
 import { getAdapter, listPlatforms } from '../platforms/index.js';
 import { cookieMap } from '../sync/session-fetch.js';
 import { buildCtx } from '../ctx.js';
-import { tunedSession, tuneWindow } from '../session-config.js';
+import { tunedSession, tuneWindow, STEALTH_PRELOAD } from '../session-config.js';
 import { emit, getMainWin } from '../windows.js';
 
 const loginWindows = new Map(); // platform -> BrowserWindow (one login at a time)
@@ -39,7 +39,9 @@ export function registerAccountIpc() {
 
     const win = new BrowserWindow({
       width: 520, height: 720, title: `Sign in — ${adapter.label}`, parent: getMainWin(),
-      webPreferences: { session: tunedSession(partition) },
+      // contextIsolation:false + the stealth preload run our spoof in IG's own
+      // world before its scripts (page can't reach node — nodeIntegration stays off).
+      webPreferences: { session: tunedSession(partition), contextIsolation: false, sandbox: false, preload: STEALTH_PRELOAD },
     });
     tuneWindow(win);
     loginWindows.set(platform, win);
