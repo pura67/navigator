@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('api', {
   listItems: (platform, category, accountId) => ipcRenderer.invoke('data:list', { platform, category, accountId }),
   creators: (platform, accountId) => ipcRenderer.invoke('data:creators', { platform, accountId }),
   byCreator: (platform, accountId, username) => ipcRenderer.invoke('data:byCreator', { platform, accountId, username }),
+  savedHeatmap: (platform, accountId) => ipcRenderer.invoke('data:savedHeatmap', { platform, accountId }),
   exportData: (platform, accountId) => ipcRenderer.invoke('export:run', { platform, accountId }),
   dmThreads: (platform, accountId) => ipcRenderer.invoke('dm:threads', { platform, accountId }),
   dmSync: (platform, accountId, threadIds) => ipcRenderer.invoke('dm:sync', { platform, accountId, threadIds }),
@@ -32,6 +33,8 @@ contextBridge.exposeInMainWorld('api', {
   testDestination: (payload) => ipcRenderer.invoke('destinations:test', payload),
   connectDrive: (clientId, clientSecret) => ipcRenderer.invoke('drive:connect', { clientId, clientSecret }),
   pushTo: (platform, accountId, destinationId, opts = {}) => ipcRenderer.invoke('push:run', { platform, accountId, destinationId, ...opts }),
+  pushPreview: (platform, accountId, destinationId) => ipcRenderer.invoke('push:preview', { platform, accountId, destinationId }),
+  pushHistory: (platform, accountId, destinationId) => ipcRenderer.invoke('push:history', { platform, accountId, destinationId }),
 
   onProgress: (cb) => ipcRenderer.on('sync:progress', (_e, p) => cb(p)),
   onPushProgress: (cb) => ipcRenderer.on('push:progress', (_e, p) => cb(p)),

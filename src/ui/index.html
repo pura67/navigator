@@ -41,73 +41,94 @@
         </div>
       </div>
 
-      <div class="card">
-        <h2>What to pull</h2>
-        <div id="scopes" class="scopes"></div>
-        <label class="opt"><input type="checkbox" id="opt-videos" /> <span>Download videos for offline playback <span class="hint">(larger; off = play on Instagram)</span></span></label>
-        <label class="opt">Pace
-          <select id="opt-pacing">
-            <option value="balanced">Balanced — safe, reasonable speed</option>
-            <option value="slow">Slow — safest, big pauses</option>
-          </select>
-          <span class="hint">randomized delays + backoff to avoid blocks</span>
-        </label>
-        <label class="opt">Date range
-          <select id="opt-cutoff">
-            <option value="all">All time</option>
-            <option value="30d">Last 30 days</option>
-            <option value="12mo">Last 12 months</option>
-            <option value="today">Today</option>
-            <option value="custom">Custom date…</option>
-          </select>
-          <input type="date" id="opt-cutoff-date" class="hidden" />
-          <span class="hint">posts &amp; reels only</span>
-        </label>
-        <button id="btn-sync" class="primary">Import data</button>
-      </div>
+      <nav class="maintabs" id="maintabs">
+        <button class="maintab active" data-pane="profile">Profile</button>
+        <button class="maintab" data-pane="browser">Browser</button>
+        <button class="maintab" data-pane="connect">Connect</button>
+      </nav>
 
-      <div class="card hidden" id="dm-card">
-        <h2>Direct messages — shared media</h2>
-        <p class="hint dm-note">Pull reels, posts, stories &amp; photos shared in the chats you pick. The conversation text itself is never read.</p>
-        <div class="dm-bar">
-          <button id="btn-dm-load">Load DM threads</button>
-          <span id="dm-pick" class="hidden"><a id="dm-all" class="link">All</a> · <a id="dm-none" class="link">None</a> · <span id="dm-count" class="hint"></span></span>
-          <button id="btn-dm-sync" class="primary hidden">Sync shared media</button>
+      <!-- ── PROFILE: pull + activity ── -->
+      <div class="pane" data-pane="profile">
+        <div class="card">
+          <h2>What to pull</h2>
+          <div id="scopes" class="scopes"></div>
+          <label class="opt"><input type="checkbox" id="opt-videos" /> <span>Download videos for offline playback <span class="hint">(larger; off = play on Instagram)</span></span></label>
+          <label class="opt">Pace
+            <select id="opt-pacing">
+              <option value="balanced">Balanced — safe, reasonable speed</option>
+              <option value="slow">Slow — safest, big pauses</option>
+            </select>
+            <span class="hint">randomized delays + backoff to avoid blocks</span>
+          </label>
+          <label class="opt">Date range
+            <select id="opt-cutoff">
+              <option value="all">All time</option>
+              <option value="30d">Last 30 days</option>
+              <option value="12mo">Last 12 months</option>
+              <option value="today">Today</option>
+              <option value="custom">Custom date…</option>
+            </select>
+            <input type="date" id="opt-cutoff-date" class="hidden" />
+            <span class="hint">limits what's downloaded (posts, reels, saved &amp; DM media)</span>
+          </label>
+          <button id="btn-sync" class="primary">Import data</button>
         </div>
-        <div id="dm-threads" class="dm-threads"></div>
-      </div>
 
-      <div class="card">
-        <h2>Your data</h2>
-        <div id="overall" class="overall"></div>
-        <div id="stats" class="stats"></div>
-      </div>
-
-      <div class="card">
-        <h2>Downloads</h2>
-        <div id="downloads" class="downloads"></div>
-      </div>
-
-      <div class="card">
-        <h2>Send a copy</h2>
-        <p class="hint">Push your synced data to a destination you control — an HTTP endpoint, S3-compatible storage, or a folder. Re-pushing only sends what's new.</p>
-        <div id="dests" class="dests"></div>
-        <div class="dest-bar">
-          <button id="btn-dest-add">+ Add destination</button>
-          <label class="opt inline"><input type="checkbox" id="dest-full" /> <span class="hint">Full re-push (ignore history, re-send everything)</span></label>
+        <div class="card hidden" id="dm-card">
+          <h2>Direct messages — shared media</h2>
+          <p class="hint dm-note">Pull reels, posts, stories &amp; photos shared in the chats you pick. The conversation text itself is never read.</p>
+          <div class="dm-bar">
+            <button id="btn-dm-load">Load DM threads</button>
+            <span id="dm-pick" class="hidden"><a id="dm-all" class="link">All</a> · <a id="dm-none" class="link">None</a> · <span id="dm-count" class="hint"></span></span>
+            <button id="btn-dm-sync" class="primary hidden">Sync shared media</button>
+          </div>
+          <div id="dm-threads" class="dm-threads"></div>
         </div>
-        <div id="dest-form" class="dest-form hidden"></div>
+
+        <div class="card">
+          <h2>Your data</h2>
+          <div id="overall" class="overall"></div>
+          <div id="stats" class="stats"></div>
+        </div>
+
+        <div class="card">
+          <h2>Downloads</h2>
+          <div id="downloads" class="downloads"></div>
+        </div>
+
+        <div class="card">
+          <h2>Saved reels — activity</h2>
+          <div id="heatmap" class="heatmap"></div>
+        </div>
+
+        <div class="card">
+          <h2>Activity</h2>
+          <pre id="log" class="log"></pre>
+        </div>
       </div>
 
-      <div class="card">
-        <h2>Browse</h2>
-        <div id="tabs" class="tabs"></div>
-        <div id="list" class="list"></div>
+      <!-- ── BROWSER ── -->
+      <div class="pane hidden" data-pane="browser">
+        <div class="card">
+          <h2>Browse</h2>
+          <div id="tabs" class="tabs"></div>
+          <div id="list" class="list"></div>
+        </div>
       </div>
 
-      <div class="card">
-        <h2>Activity</h2>
-        <pre id="log" class="log"></pre>
+      <!-- ── CONNECT: destinations + push ── -->
+      <div class="pane hidden" data-pane="connect">
+        <div class="card">
+          <h2>Send a copy</h2>
+          <p class="hint">Push your synced data to a destination you control — an HTTP endpoint, S3-compatible storage, a Drive, or a folder. Re-pushing only sends what's new.</p>
+          <div id="push-panel" class="push-panel hidden"></div>
+          <div id="dests" class="dests"></div>
+          <div class="dest-bar">
+            <button id="btn-dest-add">+ Add destination</button>
+            <label class="opt inline"><input type="checkbox" id="dest-full" /> <span class="hint">Full re-push (ignore history, re-send everything)</span></label>
+          </div>
+          <div id="dest-form" class="dest-form hidden"></div>
+        </div>
       </div>
     </section>
   </main>

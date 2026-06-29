@@ -81,6 +81,14 @@ const SCHEMA = `
     account_id INTEGER NOT NULL, ref TEXT NOT NULL, pushed_at INTEGER,
     PRIMARY KEY (destination_id, account_id, ref)
   );
+  -- One row per push run (the Connect-tab history): what went, how much, how long.
+  CREATE TABLE IF NOT EXISTS push_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    destination_id INTEGER NOT NULL REFERENCES destinations(id) ON DELETE CASCADE,
+    account_id INTEGER NOT NULL,
+    started_at INTEGER, finished_at INTEGER, status TEXT,
+    items INTEGER DEFAULT 0, bytes INTEGER DEFAULT 0, stats_json TEXT
+  );
 `;
 
 function migrate(d) {

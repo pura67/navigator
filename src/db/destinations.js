@@ -48,3 +48,13 @@ export function recordShipped(destinationId, accountId, refs) {
 // Forget the ledger for one destination/account so the next push re-sends everything.
 export const resetLedger = (destinationId, accountId) =>
   db.prepare('DELETE FROM export_log WHERE destination_id=? AND account_id=?').run(destinationId, accountId);
+
+// ── push run history ──
+export function recordPushRun({ destination_id, account_id, started_at, finished_at, status, items, bytes, stats }) {
+  return db.prepare(`INSERT INTO push_runs (destination_id, account_id, started_at, finished_at, status, items, bytes, stats_json)
+    VALUES (?,?,?,?,?,?,?,?)`).run(destination_id, account_id, started_at, finished_at, status, items || 0, bytes || 0, JSON.stringify(stats || {})).lastInsertRowid;
+}
+
+export const listPushRuns = (destinationId, accountId, limit = 10) =>
+  db.prepare('SELECT id, started_at, finished_at, status, items, bytes FROM push_runs WHERE destination_id=? AND account_id=? ORDER BY id DESC LIMIT ?')
+    .all(destinationId, accountId, limit);

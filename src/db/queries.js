@@ -133,6 +133,23 @@ export function listItems(platform, category, accountId, limit = 300) {
   }
 }
 
+// GitHub-style heatmap data: saved reels (videos) grouped by day of taken_at
+// (the reel's post date — IG doesn't expose when *you* saved it). Returns one
+// row per day with a count, plus the span + max for color bucketing.
+export function savedReelsHeatmap(platform, accountId) {
+  const acc = resolveAcc(platform, accountId);
+  if (!acc) return { rows: [], start: null, end: null, total: 0, maxN: 0 };
+  const rows = db.prepare(`
+    SELECT strftime('%Y-%m-%d', taken_at, 'unixepoch', 'localtime') AS day, COUNT(*) AS total
+    FROM saved_media
+    WHERE account_id=? AND media_type=2 AND taken_at IS NOT NULL
+    GROUP BY day ORDER BY day
+  `).all(acc.id);
+  let total = 0, maxN = 0;
+  for (const r of rows) { total += r.total; if (r.total > maxN) maxN = r.total; }
+  return { rows, start: rows[0]?.day || null, end: rows[rows.length - 1]?.day || null, total, maxN };
+}
+
 export function exportAccount(platform, accountId) {
   const acc = resolveAcc(platform, accountId);
   if (!acc) return null;

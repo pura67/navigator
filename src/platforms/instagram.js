@@ -22,7 +22,8 @@ const rand = (a, b) => Math.floor(a + Math.random() * (b - a));
 const nowS = () => Math.floor(Date.now() / 1000);
 const pacingOf = (ctx) => PACING[ctx.options?.pacing] || PACING.balanced;
 
-// Date cutoff → unix seconds (only posts/reels honor it). null = no limit.
+// Date cutoff → unix seconds. Posts/reels stop paginating at it; saved & DM keep
+// their record but skip downloading media older than it. null = no limit.
 function cutoffToTs(cutoff) {
   if (!cutoff || cutoff === 'all') return null;
   const DAY = 86400;
@@ -328,9 +329,14 @@ export default defineAdapter({
     if (want('saved')) {
       const url = (maxId) => `${BASE}/api/v1/feed/saved/posts/?count=24${maxId ? `&max_id=${maxId}` : ''}`;
       const pick = (d) => ({ items: (d.items || []).map((x) => x.media || x), nextMaxId: d.more_available ? d.next_max_id : null });
+      // Honor the date range for downloads too. Saved is ordered by save-time (not
+      // post date), so we can't stop pagination early — but we skip downloading the
+      // media of posts older than the cutoff, which is what blows up disk usage.
+      const savedCutoffTs = cutoffToTs(ctx.options?.cutoff);
       const saveBatch = async (items) => {
         const saved = items.map((it) => ({ ...normalizeMedia(it, ctx.accountId), owner_username: it.user?.username || null }));
         for (const s of saved) {
+          if (savedCutoffTs && s.taken_at && s.taken_at < savedCutoffTs) continue; // outside date range — keep the record, skip the bytes
           if (s.thumbnail_url) s.local_thumb = await ctx.downloadMedia(s.thumbnail_url, 'saved', `${s.code}.jpg`);
           if (ctx.options?.downloadVideos && s.video_url) s.local_video = await ctx.downloadMedia(s.video_url, 'saved', `${s.code}.mp4`);
         }
@@ -407,6 +413,7 @@ export default defineAdapter({
     const p = pacingOf(ctx);
     const seen = ctx.existingDmIds();
     const fileName = (s) => s.code || s.id.replace(/[:/]/g, '_');
+    const dmCutoffTs = cutoffToTs(ctx.options?.cutoff); // honor date range for downloads
     let total = 0;
     for (const tid of threadIds) {
       const marker = ctx.getCursor(`dm:${tid}`).next_max_id; // newest item_id from last run
@@ -430,6 +437,7 @@ export default defineAdapter({
           if (m && !seen.has(m.id)) { shared.push(m); seen.add(m.id); }
         }
         for (const s of shared) {
+          if (dmCutoffTs && s.shared_at && s.shared_at < dmCutoffTs) continue; // outside date range — keep the record, skip the bytes
           if (s.thumbnail_url) s.local_thumb = await ctx.downloadMedia(s.thumbnail_url, 'dm', `${fileName(s)}.jpg`);
           if (ctx.options?.downloadVideos && s.video_url) s.local_video = await ctx.downloadMedia(s.video_url, 'dm', `${fileName(s)}.mp4`);
         }

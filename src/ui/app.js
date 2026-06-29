@@ -65,6 +65,8 @@ async function loadAccount() {
   V.renderOverall(sum);
   V.renderStats(sum);
   V.renderDownloads(sum);
+  window.api.savedHeatmap(state.current, state.activeAccountId).then(V.renderSavedHeatmap);
+  loadDestinations(); // now that the account is known, populates per-destination diff/history
   V.renderTabs(sum, state.activeCat, loadCategory);
   setBusy(false);
   loadCategory(state.activeCat || V.CATS.find((c) => c.key !== 'creators' && V.countFor(sum, c.key) > 0)?.key || 'posts');
@@ -191,6 +193,11 @@ async function loadDestinations() {
   if (!state.destTypes) state.destTypes = await window.api.destinationTypes();
   state.dests = await window.api.destinations();
   V.renderDestinations(state.dests);
+  // Per-destination "what's new" diff + last-run summary (async; needs an account).
+  if (state.activeAccountId) for (const d of state.dests) {
+    window.api.pushPreview(state.current, state.activeAccountId, d.id).then((p) => V.setDestPending(d.id, p));
+    window.api.pushHistory(state.current, state.activeAccountId, d.id).then((h) => V.setDestLast(d.id, h));
+  }
 }
 
 function collectDest() {
@@ -220,9 +227,12 @@ function wireDestForm() {
   };
   $('df-test').onclick = async () => {
     const d = collectDest();
+    const btn = $('df-test'); btn.disabled = true;
     $('df-msg').textContent = 'Testing…';
     const r = await window.api.testDestination({ type: d.type, config: d.config });
+    btn.disabled = false;
     $('df-msg').textContent = r.ok ? `✓ ${r.type ? r.type + ' · ' : ''}reachable ${r.detail || ''}` : `✗ ${r.error}`;
+    alert(r.ok ? `✓ Connection works${r.type ? ` (${r.type})` : ''}.` : `✗ Test failed: ${r.error}`);
   };
   $('df-save').onclick = async () => {
     const d = collectDest();
@@ -249,22 +259,49 @@ $('dests').onclick = async (e) => {
   if (act === 'edit') return openDestForm(d);
   if (act === 'del') { if (confirm(`Remove “${d.name}”?`)) { await window.api.deleteDestination(id); loadDestinations(); } return; }
   if (act === 'test') {
+    b.disabled = true; const label = b.textContent; b.textContent = 'Testing…';
     logLine({ type: '', message: `Testing “${d.name}”…` });
     const r = await window.api.testDestination({ id });
+    b.disabled = false; b.textContent = label;
     logLine(r.ok ? { type: 'finished', message: `“${d.name}” reachable ${r.detail || ''}` } : { type: 'error', message: `“${d.name}”: ${r.error}` });
+    alert(r.ok ? `✓ “${d.name}” reachable${r.detail ? `\n${r.detail}` : ''}` : `✗ “${d.name}” failed:\n${r.error}`);
+    return;
+  }
+  if (act === 'hist') {
+    const h = await window.api.pushHistory(state.current, state.activeAccountId, id);
+    V.renderDestHistory(id, h);
     return;
   }
   if (act === 'push') {
     if (!state.activeAccountId) return alert('Connect an account first.');
     b.disabled = true;
-    $('log').innerHTML = '';
+    state.pushing = { id, name: d.name, lastBytes: 0, lastT: Date.now(), speed: 0 };
+    V.renderPushProgress(d.name, { type: 'start', sent: 0, total: 0 }, 0);
     const r = await window.api.pushTo(state.current, state.activeAccountId, id, { full: $('dest-full').checked });
     b.disabled = false;
+    state.pushing = null;
     if (r.status === 'error') logLine({ type: 'error', message: `Push failed: ${r.error}` });
     loadDestinations();
   }
 };
-window.api.onPushProgress((p) => logLine(p));
+// Live push progress → progress bar + speed (bytes delta / time delta) in #push-panel.
+window.api.onPushProgress((p) => {
+  const ps = state.pushing;
+  if (!ps) { logLine(p); return; }
+  if (typeof p.bytes === 'number') {
+    const now = Date.now(), dt = (now - ps.lastT) / 1000;
+    if (dt > 0.3 && p.bytes >= ps.lastBytes) { ps.speed = (p.bytes - ps.lastBytes) / dt; ps.lastBytes = p.bytes; ps.lastT = now; }
+  }
+  V.renderPushProgress(ps.name, p, ps.speed);
+  if (p.type === 'finished' || p.type === 'error') logLine(p);
+});
+
+// ── top-level tabs (Profile / Browser / Connect) ──
+$('maintabs').onclick = (e) => {
+  const b = e.target.closest('.maintab'); if (!b) return;
+  document.querySelectorAll('.maintab').forEach((t) => t.classList.toggle('active', t === b));
+  document.querySelectorAll('.pane').forEach((pn) => pn.classList.toggle('hidden', pn.dataset.pane !== b.dataset.pane));
+};
 
 window.api.onProgress((p) => { if (p.platform === state.current) logLine(p); });
 window.api.onConnected((p) => {
